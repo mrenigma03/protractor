@@ -30,22 +30,24 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\Downloads\KSP_win_0_18 x6\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\Downloads\KSP_win_0_18 x6\KSP_Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="protractor - partmodule.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Downloads\KSP .18\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Downloads\KSP .18\KSP_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "C:\Users\chris\Downloads\KSP_win_0_18 x6\Plugins"
+    <PostBuildEvent>copy "$(TargetPath)" "C:\Users\chris\Downloads\KSP .18\Plugins"
 copy "$(TargetPath)" "M:\users\chris\Documents\Dropbox\Chris Documents\KSP\protractor\new version\Plugins"
 copy "$(ProjectDir)protractor - partmodule.cs" "M:\users\chris\Documents\Dropbox\Chris Documents\KSP\protractor\new version\Plugins"
 copy "$(ProjectDir)Utils.cs" "M:\users\chris\Documents\Dropbox\Chris Documents\KSP\protractor\new version\Plugins"</PostBuildEvent>
