@@ -3,13 +3,12 @@
 //no warrantees of any kind are made with distribution, including but not limited to warranty of merchantability and warranty for a particular purpose.
 
 /*
- * Changes in 2.3.8
- * - fixed dv not counting mass of fuel 
+ * Changes in 2.3.9
+ * Updated colors for new bodies
+ * Fixed issues caused by two protractor modules on one ship
  * 
  * Todo list:
- * - colors for new bodies
  * - usable amount for engine modules
- * - transparent gui fix
  * - custom part icon
  * - fix for eccentricity (WIP)
  * - warp-to-angle button?
@@ -29,6 +28,7 @@ using System.Reflection;
 
 public class ProtractorModule : PartModule
 {
+    private ProtractorModule primary = null;
     private GameObject approach_obj = new GameObject("Line");
     private KSP.IO.PluginConfiguration cfg = KSP.IO.PluginConfiguration.CreateForType<ProtractorModule>();
     private static Texture2D
@@ -143,6 +143,9 @@ public class ProtractorModule : PartModule
         bodycolorlist.Add("Gilly", Utils.hextorgb("b8a58b"));
         bodycolorlist.Add("Mun", Utils.hextorgb("aeb5ca"));
         bodycolorlist.Add("Minmus", Utils.hextorgb("a68db8"));
+        bodycolorlist.Add("Eeloo", Utils.hextorgb("929292"));
+        bodycolorlist.Add("Dres", Utils.hextorgb("917552"));
+        bodycolorlist.Add("Pol", Utils.hextorgb("929d6d"));
     }
 
     public void loadicons()
@@ -642,8 +645,22 @@ public class ProtractorModule : PartModule
 
     public void drawGUI()
     {
-        if (vessel == FlightGlobals.ActiveVessel)
+        primary = this;
+
+        foreach (Part p in vessel.parts)
         {
+            foreach (PartModule pm in p.Modules)
+            {
+                if (pm.GetInstanceID() < this.GetInstanceID())
+                {
+                    primary = (ProtractorModule)pm;
+                }
+            }
+        }
+
+        if (vessel == FlightGlobals.ActiveVessel && primary == this)
+        {
+            
             GUI.skin = HighLogic.Skin;
             if (HighLogic.LoadedSceneIsFlight && !FlightDriver.Pause)
             {
