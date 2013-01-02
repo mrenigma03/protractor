@@ -651,7 +651,7 @@ public class ProtractorModule : PartModule
         {
             foreach (PartModule pm in p.Modules)
             {
-                if (pm.GetInstanceID() < this.GetInstanceID())
+                if (pm.GetInstanceID() < this.GetInstanceID() && pm is ProtractorModule)
                 {
                     primary = (ProtractorModule)pm;
                 }
