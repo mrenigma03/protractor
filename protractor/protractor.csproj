@@ -47,7 +47,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "C:\Users\chris\Downloads\KSP .18\Plugins"
+    <PostBuildEvent>copy "$(TargetPath)" "C:\Users\chris\Downloads\KSP .18.2\Plugins"
 copy "$(TargetPath)" "M:\users\chris\Documents\Dropbox\Chris Documents\KSP\protractor\new version\Plugins"
 copy "$(ProjectDir)protractor - partmodule.cs" "M:\users\chris\Documents\Dropbox\Chris Documents\KSP\protractor\new version\Plugins"
 copy "$(ProjectDir)Utils.cs" "M:\users\chris\Documents\Dropbox\Chris Documents\KSP\protractor\new version\Plugins"</PostBuildEvent>
