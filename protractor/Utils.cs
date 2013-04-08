@@ -43,4 +43,29 @@ class Utils
         finalColor.a = 1;
         return finalColor;
     }
+
+    //public static string seconds_to_time(double val)
+    //{
+    //    int days;
+    //    int hours;
+    //    int minutes;
+    //    int seconds;
+
+    //    days = (int)(val / 86400);
+    //    val -= days * 86400;
+
+    //    hours = (int)(val / 3600);
+    //    val -= hours * 3600;
+
+    //    minutes = (int)(val / 60);
+    //    val -= minutes * 60;
+
+    //    seconds = (int)val;
+        
+    //    return
+    //        days.ToString() + ":" +
+    //        minutes.ToString() + ":" +
+    //        hours.ToString() + ":" +
+    //        seconds.ToString();
+    //}
 }

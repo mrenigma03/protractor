@@ -3,19 +3,22 @@
 //no warrantees of any kind are made with distribution, including but not limited to warranty of merchantability and warranty for a particular purpose.
 
 /*
- * Changes in 2.3.9
- * Updated colors for new bodies
- * Fixed issues caused by two protractor modules on one ship
+ Changes in 2.3.10
+ * new! when body is focused and intercept is detected, your predicted inclination is displayed below closest approach
+ * new! click theta symbol to toggle between time and angle to next launch window
+ * fixed text alignment for tracked dv
  * 
- * Todo list:
- * - usable amount for engine modules
- * - custom part icon
- * - fix for eccentricity (WIP)
- * - warp-to-angle button?
- * - toggle delta-v and target v?
- * - toggle time/angle?
- * - debris/vessel tracking?
- * - "lap" timer for dv?
+ 
+ Todo list:
+ * fix for disabled engines counting toward dv
+ * usable amount for engine modules
+ * custom part icon
+ * fix for eccentricity (WIP)
+ * warp-to-angle button?
+ * toggle delta-v and target v?
+ * debris/vessel tracking?
+ * "lap" timer for dv?
+ * 
 */
 
 using System;
@@ -50,6 +53,7 @@ public class ProtractorModule : PartModule
         windowPos;
     private Vector2 scrollposition;
     private bool
+        thetatotime = false,
         adjustejectangle = false,
         showmanual = true,
         minimized = false,
@@ -79,10 +83,11 @@ public class ProtractorModule : PartModule
         trackeddv = 0,
         closestApproachTime = -1;
     private enum orbitbodytype { sun, planet, moon };
-    private int[] colwidths = new int[6] { 70, 63, 63, 71, 100, 71 };
+    private int[] colwidths = new int[6] { 70, 82, 63, 71, 100, 71 };
     private ProtractorModule.orbitbodytype orbiting;
     private string
         bodytip,
+        phase_angle_time,
         linetip;
     private string[]
         colheaders = new string[6] { "", "θ", "Ψ", "Δv", "Closest", "Moon Ω" };
@@ -274,7 +279,18 @@ public class ProtractorModule : PartModule
                 if (i == 5 && (!showadvanced || orbiting != orbitbodytype.moon)) continue;
                 GUILayout.BeginVertical(GUILayout.Width(colwidths[i]));
                 {
-                    GUILayout.Label(colheaders[i], boldstyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                    if (colheaders[i] == "θ")
+                    {
+                        GUILayout.Label(new GUIContent(colheaders[i], phase_angle_time), boldstyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        if ((Event.current.type == EventType.repaint) && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition) && Input.GetMouseButtonDown(0))
+                        {
+                            thetatotime = !thetatotime;
+                        }
+                    }
+                    else
+                    {
+                        GUILayout.Label(colheaders[i], boldstyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                    }
                 }
                 GUILayout.EndVertical();
             }
@@ -291,7 +307,7 @@ public class ProtractorModule : PartModule
             GUILayout.BeginHorizontal(databox); //starts a row of planet data
             for (int i = 0; i <= 5; i++)
             {
-                GUILayout.BeginVertical(GUILayout.Width(colwidths[i])); //begin data cell
+                GUILayout.BeginVertical(GUILayout.MinWidth(colwidths[i])); //begin data cell
                 switch (i)
                 {
                     case 0:                                                         //******printing names******
@@ -311,14 +327,55 @@ public class ProtractorModule : PartModule
                         }
                         break;
                     case 1:                                                         //******printing phase angles******
-                        if (orbiting == orbitbodytype.moon)
+                        double data;
+                        string datastring;
+                        if (orbiting == orbitbodytype.moon) //get the data
                         {
-                            GUILayout.Label(String.Format("{0:0.00}°", (CurrentPhase(planet) - OberthDesiredPhase(planet) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                            data = (CurrentPhase(planet) - OberthDesiredPhase(planet) + 360) % 360;
                         }
                         else
                         {
-                            GUILayout.Label(String.Format("{0:0.00}°", (CurrentPhase(planet) - DesiredPhase(planet) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                            data = (CurrentPhase(planet) - DesiredPhase(planet) + 360) % 360;
                         }
+
+                        if (thetatotime)    //convert to time or leave as angle
+                        {
+                            double delta_theta;
+                            if (orbiting == orbitbodytype.moon)
+                            {
+                                CelestialBody o = vessel.orbit.referenceBody.orbit.referenceBody;
+                                delta_theta = (360 / o.orbit.period) - (360 / planet.orbit.period);
+                            }
+                            else if (orbiting == orbitbodytype.planet)
+                            {
+                                CelestialBody o = vessel.orbit.referenceBody;
+                                delta_theta = (360 / o.orbit.period) - (360 / planet.orbit.period);
+                            }
+                            else
+                            {
+                                delta_theta = (360 / vessel.orbit.period) - (360 / planet.orbit.period);
+                            }
+                            
+                            //CelestialBody o = orbiting == orbitbodytype.moon ? vessel.orbit.referenceBody.orbit.referenceBody : vessel.orbit.referenceBody;
+                            //double delta_theta = (360 / o.orbit.period) - (360 / planet.orbit.period);
+                            if (delta_theta > 0)
+                            {
+                                data /= delta_theta;
+                            }
+                            else
+                            {
+                                data = Math.Abs((360 - data) / (delta_theta));
+                            }
+                            data = Math.Truncate(data);
+                            datastring = TimeSpan.FromSeconds(data).ToString();
+                        }
+                        else
+                        {
+                            datastring = String.Format("{0:0.00}°", data);
+                        }
+
+                        GUILayout.Label(datastring, datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+
                         break;
                     case 2:                                                         //******printing psi angles******
                         if (orbiting == orbitbodytype.planet)
@@ -388,7 +445,6 @@ public class ProtractorModule : PartModule
                 }
                 GUILayout.EndVertical();    //end data cell
             }
-            //if (GUI.tooltip != "") GUI.Label(new Rect(Event.current.mousePosition.x + 10, Event.current.mousePosition.y, 100, 20), GUI.tooltip, new GUIStyle(GUI.skin.box));
             GUILayout.EndHorizontal(); //end planet row
         }
     }
@@ -421,7 +477,48 @@ public class ProtractorModule : PartModule
                         }
                         break;
                     case 1:                                         //******printing phase angles******
-                        GUILayout.Label(String.Format("{0:0.00}°", (CurrentPhase(moon) - DesiredPhase(moon) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        double data = (CurrentPhase(moon) - DesiredPhase(moon) + 360) % 360;
+                        string datastring;
+                        if (thetatotime)
+                        {
+                            double delta_theta;
+                            if (vessel.Landed && orbiting == orbitbodytype.planet)  //ship is landed on a planet, use rotation of the planet
+                            {
+                                //double ves_vel = vessel.horizontalSrfSpeed;
+                                double ves_vel = vessel.orbit.getOrbitalSpeedAtPos(vessel.CoM);
+                                double radius = vessel.altitude + vessel.mainBody.Radius;
+                                double circumference = Math.PI * 2 * radius;
+                                double rot = circumference / ves_vel;
+                                delta_theta = (360 / rot) - (360 / moon.orbit.period);
+                            }
+                            else if (orbiting == orbitbodytype.planet)   //ship orbiting a planet, but is not landed
+                            {
+                                delta_theta = (360 / vessel.orbit.period) - (360 / moon.orbit.period);
+                            }
+                            else     //ship orbiting a moon
+                            {
+                                CelestialBody o = vessel.mainBody;
+                                delta_theta = (360 / o.orbit.period) - (360 / moon.orbit.period);
+                            }
+                            
+                            //double delta_theta = (360 / vessel.orbit.referenceBody.orbit.period) - (360 / moon.orbit.period);   //FIX THIS - COMPARE ROTATION OF PLANET TO MOON OR USE TWO PLANET MODEL FOR TWO MOONS
+                            if (delta_theta > 0)
+                            {
+                                data/= delta_theta;
+                            }
+                            else
+                            {
+                                data = Math.Abs((360 - data) / (delta_theta));
+                            }
+                            data = Math.Truncate(data);
+                            datastring = TimeSpan.FromSeconds(data).ToString();
+                        }
+                        else
+                        {
+                            datastring = String.Format("{0:0.00}°", data);
+                        }
+                        GUILayout.Label(datastring, datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        
                         break;
                     case 2:                                         //******printing eject angleS******
                         if (orbiting == orbitbodytype.planet) //vessel and moon share planet
@@ -521,6 +618,21 @@ public class ProtractorModule : PartModule
 
             GUILayout.FlexibleSpace();
 
+            if (focusbody != null && getclosestapproach(focusbody) <= focusbody.sphereOfInfluence)
+            {
+                Orbit o = getclosestorbit(focusbody);
+                if (o.referenceBody == focusbody)
+                {
+                    GUILayout.Label(String.Format("Inc: {0:0.00}°", o.inclination));
+                }
+                else
+                {
+                    GUILayout.Label("Inc: ---");
+                }
+            }
+
+            GUILayout.FlexibleSpace();
+
             GUILayout.BeginVertical(GUILayout.Width(10));
             {
                 showmanual = GUILayout.Toggle(showmanual, "?", new GUIStyle(GUI.skin.button));
@@ -553,32 +665,30 @@ public class ProtractorModule : PartModule
 
         if (showdv)
         {
+            int w = 80;
+            boldstyle.alignment = TextAnchor.MiddleLeft;
             GUILayout.BeginHorizontal(databox);
-
-            GUILayout.BeginVertical();
             {
-                GUILayout.Label(string.Format("Total Δv: {0:0} m/s", totaldv), boldstyle);
-                GUILayout.Label(string.Format("Tracked Δv: {0:0} m/s", trackeddv), boldstyle);
+                GUILayout.BeginVertical();
+                {
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayout.Label(string.Format("Sum Δv: {0:#,#}", totaldv), boldstyle, GUILayout.ExpandWidth(true));
+                        trackdv = GUILayout.Toggle(trackdv, "Track", new GUIStyle(GUI.skin.button), GUILayout.Width(w));
+                    }
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayout.Label(string.Format("Tracked Δv: {0:#,#}", trackeddv), boldstyle, GUILayout.ExpandWidth(true));
+                        if (GUILayout.Button("Reset", new GUIStyle(GUI.skin.button), GUILayout.Width(w))) trackeddv = 0;
+                    }
+                    GUILayout.EndHorizontal();
+                }
+                GUILayout.EndVertical();
             }
-            GUILayout.EndVertical();
-
-            GUILayout.FlexibleSpace();
-
-            GUILayout.BeginVertical();
-            {
-                GUILayout.Label("");
-                trackdv = GUILayout.Toggle(trackdv, "Track Δv", new GUIStyle(GUI.skin.button));
-            }
-            GUILayout.EndVertical();
-
-            GUILayout.BeginVertical();
-            {
-                GUILayout.Label("");
-                if (GUILayout.Button("Reset Δv", new GUIStyle(GUI.skin.button))) trackeddv = 0;
-            }
-            GUILayout.EndVertical();
-
             GUILayout.EndHorizontal();
+            boldstyle.alignment = TextAnchor.LowerCenter;
         }
     }
 
@@ -598,6 +708,7 @@ public class ProtractorModule : PartModule
 
         bodytip = focusbody == null ? "Click to focus" : "Click to unfocus";
         linetip = "Click to toggle approach line";
+        phase_angle_time = "Click to toggle between angle and time";
 
         printheaders();
         if (showplanets) printplanetdata();
@@ -688,14 +799,20 @@ public class ProtractorModule : PartModule
 
     public override void OnStart(PartModule.StartState state)
     {
-        loadsettings();
+        //loadsettings();
         base.OnStart(state);
-        if ((windowPos.x == 0) && (windowPos.y == 0))//windowPos is used to position the GUI window, lets set it in the center of the screen
-        {
-            windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
-        }
+        //if ((windowPos.x == 0) && (windowPos.y == 0))//windowPos is used to position the GUI window, lets set it in the center of the screen
+        //{
+        //    windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
+        //}
         if (state != StartState.Editor)
         {
+            loadsettings();
+            if ((windowPos.x == 0) && (windowPos.y == 0))//windowPos is used to position the GUI window, lets set it in the center of the screen
+            {
+                windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
+            }
+
             approach_obj.layer = 9;
             Debug.Log("****************************");
             cam = (PlanetariumCamera)GameObject.FindObjectOfType(typeof(PlanetariumCamera));
@@ -753,6 +870,7 @@ public class ProtractorModule : PartModule
     public void savesettings()
     {
         if (!loaded) return;
+        cfg["config_version"] = version;
         cfg["mainpos"] = windowPos;
         cfg["manualpos"] = manualwindowPos;
         cfg["showadvanced"] = showadvanced;
@@ -772,20 +890,39 @@ public class ProtractorModule : PartModule
 
     public void loadsettings()
     {
-        cfg.load();
+        Debug.Log("-------------Loading settings...-------------");
 
-        windowPos = cfg.GetValue<Rect>("mainpos");
-        manualwindowPos = cfg.GetValue<Rect>("manualpos");
-        showadvanced = cfg.GetValue<bool>("showadvanced");
-        adjustejectangle = cfg.GetValue<bool>("adjustejectangle");
-        showmanual = cfg.GetValue<bool>("showmanual");
-        minimized = cfg.GetValue<bool>("minimized");
-        showplanets = cfg.GetValue<bool>("showplanets");
-        showmoons = cfg.GetValue<bool>("showmoons");
-        showadvanced = cfg.GetValue<bool>("showadvanced");
-        showdv = cfg.GetValue<bool>("showdv");
-        trackdv = cfg.GetValue<bool>("trackdv");
-        loaded = true;
+        try
+        {
+            cfg.load();
+            Debug.Log("-------------Settings Opened-------------");
+            windowPos = cfg.GetValue<Rect>("mainpos");
+            manualwindowPos = cfg.GetValue<Rect>("manualpos");
+            showadvanced = cfg.GetValue<bool>("showadvanced");
+            adjustejectangle = cfg.GetValue<bool>("adjustejectangle");
+            showmanual = cfg.GetValue<bool>("showmanual");
+            minimized = cfg.GetValue<bool>("minimized");
+            showplanets = cfg.GetValue<bool>("showplanets");
+            showmoons = cfg.GetValue<bool>("showmoons");
+            showdv = cfg.GetValue<bool>("showdv");
+            trackdv = cfg.GetValue<bool>("trackdv");
+        }
+        catch
+        {
+            Debug.Log("-------------New Settings File Being Created-------------");
+            windowPos = new Rect(0, 0, 0, 0);
+            manualwindowPos = new Rect(0, 0, 0, 0);
+            showadvanced = true;
+            adjustejectangle = false;
+            showmanual = true;
+            minimized = false;
+            showplanets = true;
+            showmoons = true;
+            showdv = true;
+            trackdv = true;
+            Debug.Log("-------------New Settings File Created-------------");
+        }
+        loaded = true;  //loaded
 
         Debug.Log("-------------Loaded Protractor Settings-------------");
     }
