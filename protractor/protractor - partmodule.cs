@@ -3,16 +3,15 @@
 //no warrantees of any kind are made with distribution, including but not limited to warranty of merchantability and warranty for a particular purpose.
 
 /*
- Changes in 2.3.10
+ Changes in 2.4.0
  * new! when body is focused and intercept is detected, your predicted inclination is displayed below closest approach
- * new! click theta symbol to toggle between time and angle to next launch window
+ * new! click theta symbol to toggle between estimated time and angle to next launch window
  * fixed text alignment for tracked dv
  * 
  
  Todo list:
  * fix for disabled engines counting toward dv
  * usable amount for engine modules
- * custom part icon
  * fix for eccentricity (WIP)
  * warp-to-angle button?
  * toggle delta-v and target v?
@@ -83,7 +82,7 @@ public class ProtractorModule : PartModule
         trackeddv = 0,
         closestApproachTime = -1;
     private enum orbitbodytype { sun, planet, moon };
-    private int[] colwidths = new int[6] { 70, 82, 63, 71, 100, 71 };
+    private int[] colwidths = new int[6] { 70, 75, 63, 71, 100, 71 };
     private ProtractorModule.orbitbodytype orbiting;
     private string
         bodytip,
@@ -243,7 +242,9 @@ public class ProtractorModule : PartModule
             "*****Tips*****\n\n" +
             "- Click on the icon in the bottom left to hide Protractor and its windows\n" +
             "- Click on the number in \"Closest\" column to toggle the closest approach line on the map\n" +
-            "- Click on the name of a celestial body in the list to hide other bodies.\n\n" +
+            "- Click on the name of a celestial body in the list to hide other bodies.\n" +
+            "- Click on θ in the column headers to toggle between displaying an angle and an approximate time until the next launch window in the format D.HH:MM.\n" +
+            "- When a body is focused and an intercept is detected, your predicted inclination is displayed below the closest approach.\n\n" +
             "*****Column Key*****\n\n" +
             "θ: Difference in the current angle between bodies and the desired angle between them for transfer. Launch your ship when this is 0.\n\n" +
             "Ψ: Point in vessel's current orbit (relative to orbited body's prograde) where you should start your ejection burn. Burn when this is 0.\n\n" +
@@ -366,8 +367,7 @@ public class ProtractorModule : PartModule
                             {
                                 data = Math.Abs((360 - data) / (delta_theta));
                             }
-                            data = Math.Truncate(data);
-                            datastring = TimeSpan.FromSeconds(data).ToString();
+                            datastring = Utils.removeseconds(TimeSpan.FromSeconds(data).ToString());
                         }
                         else
                         {
@@ -489,7 +489,7 @@ public class ProtractorModule : PartModule
                                 double radius = vessel.altitude + vessel.mainBody.Radius;
                                 double circumference = Math.PI * 2 * radius;
                                 double rot = circumference / ves_vel;
-                                delta_theta = (360 / rot) - (360 / moon.orbit.period);
+                                delta_theta = (360 / rot)-(360 / moon.orbit.period);
                             }
                             else if (orbiting == orbitbodytype.planet)   //ship orbiting a planet, but is not landed
                             {
@@ -510,8 +510,7 @@ public class ProtractorModule : PartModule
                             {
                                 data = Math.Abs((360 - data) / (delta_theta));
                             }
-                            data = Math.Truncate(data);
-                            datastring = TimeSpan.FromSeconds(data).ToString();
+                            datastring = Utils.removeseconds(TimeSpan.FromSeconds(data).ToString());
                         }
                         else
                         {
@@ -708,7 +707,7 @@ public class ProtractorModule : PartModule
 
         bodytip = focusbody == null ? "Click to focus" : "Click to unfocus";
         linetip = "Click to toggle approach line";
-        phase_angle_time = "Click to toggle between angle and time";
+        phase_angle_time = "Toggle between angle and ESTIMATED time";
 
         printheaders();
         if (showplanets) printplanetdata();

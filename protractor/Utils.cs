@@ -44,28 +44,15 @@ class Utils
         return finalColor;
     }
 
-    //public static string seconds_to_time(double val)
-    //{
-    //    int days;
-    //    int hours;
-    //    int minutes;
-    //    int seconds;
+    public static string removeseconds(string str)
+    {
+        int i=0;
 
-    //    days = (int)(val / 86400);
-    //    val -= days * 86400;
+        for (int x = 0; x < str.Length; x++)
+        {
+            if (str[x] == ':') i = x;
+        }
 
-    //    hours = (int)(val / 3600);
-    //    val -= hours * 3600;
-
-    //    minutes = (int)(val / 60);
-    //    val -= minutes * 60;
-
-    //    seconds = (int)val;
-        
-    //    return
-    //        days.ToString() + ":" +
-    //        minutes.ToString() + ":" +
-    //        hours.ToString() + ":" +
-    //        seconds.ToString();
-    //}
+        return str.Substring(0,i);
+    }
 }
