@@ -5,7 +5,8 @@
 /*
  Changes in 2.4.0
  * new! when body is focused and intercept is detected, your predicted inclination is displayed below closest approach
- * new! click theta symbol to toggle between estimated time and angle to next launch window
+ * new! click theta symbol to toggle between estimated time and angle to next launch window in days, hours minutes format
+ * new! click phi symbol to toggle between estimated time and angle to next launch window in days, hours minutes format
  * fixed text alignment for tracked dv
  * 
  
@@ -52,6 +53,7 @@ public class ProtractorModule : PartModule
         windowPos;
     private Vector2 scrollposition;
     private bool
+        phitotime = false,
         thetatotime = false,
         adjustejectangle = false,
         showmanual = true,
@@ -85,6 +87,7 @@ public class ProtractorModule : PartModule
     private int[] colwidths = new int[6] { 70, 75, 63, 71, 100, 71 };
     private ProtractorModule.orbitbodytype orbiting;
     private string
+        phi_time,
         bodytip,
         phase_angle_time,
         linetip;
@@ -288,6 +291,14 @@ public class ProtractorModule : PartModule
                             thetatotime = !thetatotime;
                         }
                     }
+                    else if (colheaders[i] == "Ψ")
+                    {
+                        GUILayout.Label(new GUIContent(colheaders[i], phi_time), boldstyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        if ((Event.current.type == EventType.repaint) && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition) && Input.GetMouseButtonDown(0))
+                        {
+                            phitotime = !phitotime;
+                        }
+                    }
                     else
                     {
                         GUILayout.Label(colheaders[i], boldstyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
@@ -357,8 +368,6 @@ public class ProtractorModule : PartModule
                                 delta_theta = (360 / vessel.orbit.period) - (360 / planet.orbit.period);
                             }
                             
-                            //CelestialBody o = orbiting == orbitbodytype.moon ? vessel.orbit.referenceBody.orbit.referenceBody : vessel.orbit.referenceBody;
-                            //double delta_theta = (360 / o.orbit.period) - (360 / planet.orbit.period);
                             if (delta_theta > 0)
                             {
                                 data /= delta_theta;
@@ -378,25 +387,64 @@ public class ProtractorModule : PartModule
 
                         break;
                     case 2:                                                         //******printing psi angles******
-                        if (orbiting == orbitbodytype.planet)
+                        //if (orbiting == orbitbodytype.planet)
+                        //{
+                        //    if (!adjustejectangle)
+                        //    {
+                        //        GUILayout.Label(String.Format("{0:0.00}°", (CalculateDesiredEjectionAngle(vessel.mainBody, planet) - CurrentEjectAngle(null) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        //    }
+                        //    else if (adjustejectangle && tmr() > 0)
+                        //    {
+                        //        GUILayout.Label(String.Format("{0:0.00}°", (AdjustEjectAngle(vessel.mainBody, planet) - CurrentEjectAngle(null) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        //    }
+                        //    else
+                        //    {
+                        //        GUILayout.Label("0 TMR", datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                        //    }
+                        //}
+                        //else
+                        //{
+                        //    GUILayout.Label("----", datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+
+                        //}
+
+                        if (orbiting != orbitbodytype.planet)
                         {
-                            if (!adjustejectangle)
-                            {
-                                GUILayout.Label(String.Format("{0:0.00}°", (CalculateDesiredEjectionAngle(vessel.mainBody, planet) - CurrentEjectAngle(null) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-                            }
-                            else if (adjustejectangle && tmr() > 0)
-                            {
-                                GUILayout.Label(String.Format("{0:0.00}°", (AdjustEjectAngle(vessel.mainBody, planet) - CurrentEjectAngle(null) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-                            }
-                            else
-                            {
-                                GUILayout.Label("0 TMR", datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-                            }
+                            GUILayout.Label("----", datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                         }
                         else
                         {
-                            GUILayout.Label("----", datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                            double phidata;
+                            string phidisplay;
 
+                            if (!adjustejectangle)
+                            {
+                                phidata = (CalculateDesiredEjectionAngle(vessel.mainBody, planet) - CurrentEjectAngle(null) + 360) % 360;
+                            }
+                            else if (adjustejectangle && tmr() > 0)
+                            {
+                                phidata = (AdjustEjectAngle(vessel.mainBody, planet) - CurrentEjectAngle(null) + 360) % 360;
+                            }
+                            else
+                            {
+                                phidata = -1;
+                            }
+
+                            if (phidata == -1)
+                            {
+                                phidisplay = "0 TMR";
+                            }
+                            else if (phitotime)
+                            {
+                                phidata /= (360 / vessel.orbit.period);
+                                phidisplay = Utils.removeseconds(TimeSpan.FromSeconds(phidata).ToString());
+                            }
+                            else
+                            {
+                                phidisplay = String.Format("{0:0.00}°", phidata);
+                            }
+
+                            GUILayout.Label(phidisplay, datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                         }
                         break;
 
@@ -526,18 +574,37 @@ public class ProtractorModule : PartModule
                         }
                         else //vessel orbiting moon
                         {
+                            double phidata;
+                            string phidisplay;
+
                             if (!adjustejectangle)
                             {
-                                GUILayout.Label(String.Format("{0:0.00}°", (CalculateDesiredEjectionAngle(vessel.mainBody, moon) - CurrentEjectAngle(null) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                                phidata = (CalculateDesiredEjectionAngle(vessel.mainBody, moon) - CurrentEjectAngle(null) + 360) % 360;
                             }
                             else if (adjustejectangle && tmr() > 0)
                             {
-                                GUILayout.Label(String.Format("{0:0.00}°", (AdjustEjectAngle(vessel.mainBody, moon) - CurrentEjectAngle(null) + 360) % 360), datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                                phidata = (AdjustEjectAngle(vessel.mainBody, moon) - CurrentEjectAngle(null) + 360) % 360;
                             }
                             else
                             {
-                                GUILayout.Label("0 TMR", datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
+                                phidata = -1;
                             }
+
+                            if(phidata == -1)
+                            {
+                                phidisplay = "0 TMR";
+                            }
+                            else if (phitotime)
+                            {
+                                phidata /= (360/vessel.orbit.period);
+                                phidisplay = Utils.removeseconds(TimeSpan.FromSeconds(phidata).ToString());
+                            }
+                            else
+                            {
+                                phidisplay = String.Format("{0:0.00}°", phidata);
+                            }
+                            
+                            GUILayout.Label(phidisplay, datastyle, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
                         }
                         break;
                     case 3:
@@ -708,6 +775,7 @@ public class ProtractorModule : PartModule
         bodytip = focusbody == null ? "Click to focus" : "Click to unfocus";
         linetip = "Click to toggle approach line";
         phase_angle_time = "Toggle between angle and ESTIMATED time";
+        phi_time = "Toggle between angle and ESTIMTED time";
 
         printheaders();
         if (showplanets) printplanetdata();
