@@ -3,11 +3,8 @@
 //no warrantees of any kind are made with distribution, including but not limited to warranty of merchantability and warranty for a particular purpose.
 
 /*
- Changes in 2.4.0
- * new! when body is focused and intercept is detected, your predicted inclination is displayed below closest approach
- * new! click theta symbol to toggle between estimated time and angle to next launch window in days, hours minutes format
- * new! click phi symbol to toggle between estimated time and angle to next launch window in days, hours minutes format
- * fixed text alignment for tracked dv
+ Changes in 2.4.1
+ * updated for 0.20
  * 
  
  Todo list:
