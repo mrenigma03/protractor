@@ -3,19 +3,16 @@
 //no warrantees of any kind are made with distribution, including but not limited to warranty of merchantability and warranty for a particular purpose.
 
 /*
- Changes in 2.4.1
- * updated for 0.20
- * 
+ Changes in 2.4.2
+ * updated for 0.21
  
  Todo list:
  * fix for disabled engines counting toward dv
  * usable amount for engine modules
- * fix for eccentricity (WIP)
  * warp-to-angle button?
  * toggle delta-v and target v?
  * debris/vessel tracking?
  * "lap" timer for dv?
- * 
 */
 
 using System;
@@ -98,7 +95,7 @@ public class ProtractorModule : PartModule
         getplanets();
         getmoons();
         lastknownmainbody = vessel.mainBody;
-        approach.material = ((OrbitRenderer)GameObject.FindObjectOfType(typeof(OrbitRenderer))).lineMaterial;
+
         getorbitbodytype();
 
         init = true;
@@ -150,6 +147,7 @@ public class ProtractorModule : PartModule
         bodycolorlist.Add("Eeloo", Utils.hextorgb("929292"));
         bodycolorlist.Add("Dres", Utils.hextorgb("917552"));
         bodycolorlist.Add("Pol", Utils.hextorgb("929d6d"));
+        Debug.Log("-------------Protractor Initialized-------------");
     }
 
     public void loadicons()
@@ -863,12 +861,7 @@ public class ProtractorModule : PartModule
 
     public override void OnStart(PartModule.StartState state)
     {
-        //loadsettings();
         base.OnStart(state);
-        //if ((windowPos.x == 0) && (windowPos.y == 0))//windowPos is used to position the GUI window, lets set it in the center of the screen
-        //{
-        //    windowPos = new Rect(Screen.width / 2, Screen.height / 2, 10, 10);
-        //}
         if (state != StartState.Editor)
         {
             loadsettings();
@@ -878,15 +871,19 @@ public class ProtractorModule : PartModule
             }
 
             approach_obj.layer = 9;
-            Debug.Log("****************************");
             cam = (PlanetariumCamera)GameObject.FindObjectOfType(typeof(PlanetariumCamera));
+            
             approach = approach_obj.AddComponent<LineRenderer>();
             approach.transform.parent = null;
             approach.enabled = false;
             approach.SetColors(Color.green, Color.green);
             approach.useWorldSpace = true;
             approach.SetVertexCount(2);
-            approach.SetWidth(15, 5);
+            approach.SetWidth(10, 10);  //was 15, 5
+
+            approach.material = ((MapView)GameObject.FindObjectOfType(typeof(MapView))).orbitLinesMaterial;
+
+            
 
             loadicons();
             RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
