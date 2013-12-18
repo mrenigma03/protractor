@@ -3,8 +3,8 @@
 //no warrantees of any kind are made with distribution, including but not limited to warranty of merchantability and warranty for a particular purpose.
 
 /*
- Changes in 2.4.2
- * updated for 0.21
+ Changes in 2.4.3
+ * updated for 0.22
  
  Todo list:
  * fix for disabled engines counting toward dv
@@ -13,6 +13,7 @@
  * toggle delta-v and target v?
  * debris/vessel tracking?
  * "lap" timer for dv?
+ * closest approach on maneuver nodes
 */
 
 using System;
