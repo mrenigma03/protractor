@@ -1,10 +1,10 @@
 ﻿//author: Enigma
-//Distributed according to GNU General Public License version 3, available at http://www.gnu.org/copyleft/gpl.html
+//Distributed according to GNU General Public License version 3, available at http://www.gnu.org/copyleft/gpl.html. All other rights reserved.
 //no warrantees of any kind are made with distribution, including but not limited to warranty of merchantability and warranty for a particular purpose.
 
 /*
- Changes in 2.4.4
- * updated for 0.23
+ Changes in 2.4.5
+ * added support for ModuleEngineFX
  
  Todo list:
  * fix for disabled engines counting toward dv
@@ -1283,6 +1283,22 @@ public class ProtractorModule : PartModule
                         if (pm is ModuleEngines && pm.isEnabled)
                         {
                             ModuleEngines me = (ModuleEngines)pm;
+                            //double amountforward = Vector3d.Dot(me.thrustTransform.rotation * me.thrust, forward);
+                            if (!me.flameout)
+                            {
+                                thrustmax += me.maxThrust;
+                                thrustmin += me.minThrust;
+                            }
+                        }
+                    }
+                }
+                else if (p.Modules.Contains("ModuleEnginesFx"))
+                {
+                    foreach (PartModule pm in p.Modules)
+                    {
+                        if (pm is ModuleEnginesFX && pm.isEnabled)
+                        {
+                            ModuleEnginesFX me = (ModuleEnginesFX)pm;
                             //double amountforward = Vector3d.Dot(me.thrustTransform.rotation * me.thrust, forward);
                             if (!me.flameout)
                             {
